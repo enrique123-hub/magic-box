@@ -4,7 +4,7 @@
             <div class="modal-error__header">
                 <h1>Error al cargar el archivo</h1>
             </div>
-            <div @click="closeModal()">
+            <div @click="closeModal()" class="modal-error__error">
                 <button>
                     Cerrar
                 </button>
@@ -32,28 +32,37 @@ export default {
 </script>
 <style scoped lang="scss">
 .modal-error {
-    padding: 21px;
+    padding: 15px;
     display: grid;
     grid-row-gap: rem(13px);
+    border-radius: 15px;
 
     &__header {
-        background-color: red;
+        text-align: center;
+        margin-top: 15px;
         margin-bottom: 25px;
         h1 {
+            font-size: 35px;
             font-weight: bold;
             line-height: 22px;
         }
     }
 
-    button {
-        border-radius: 5px;
-        border: 1px solid black;
-        cursor: pointer;
-        background-color: blue;
-        color: white;
-        width: 150px;
-        padding: 16px 12px;
-        font-size: 15px;
+    &__error {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+
+        button {
+            border-radius: 5px;
+            border: 1px solid black;
+            cursor: pointer;
+            background-color: #D9D9F3;
+            color: black;
+            width: 250px;
+            padding: 16px 12px;
+            font-size: 15px;
+        }
     }
     
 }

@@ -2,26 +2,24 @@
 
   <div class="container">
     <div class="container__control-table" >
-      <div class="error" v-show="showError()">
-        <label for=""> Error al cargar el archivo </label>
-      </div>
       <div class="table-empty" v-show="tableEmpty()">
-        <span>Tabla vacia</span>
+        <span>Agregar Archivo</span>
       </div>
-      <div class="table-box">
-        <ul v-for="(number, index) in numbers" :key="index">
-            <li> {{number}} </li>
+      <div class="table-box" v-show="!tableEmpty()">
+        <ul v-for="(number, index) in numbers " :key="index">
+          <li v-if="number == 0" class="numberList"> {{ number }} </li>
+          <li v-else > {{ number }} </li>
         </ul>
-    </div>
+      </div>
       <div class="buttons">
         <label class="text-reader">
            Subir archivo
-          <input class="addNumber" type="file" ref="text" @change="addNumber()" :key="txtFile" />
+          <input class="addNumber" type="file" ref="text" @change="addNumber()" :key="txtFile" :disabled="disableAddFile" />
         </label>
         <button class="orderNumber" @click="orderNumber()">
           Ordenar Numeros
         </button>
-        <button @click="cleanTable">
+        <button @click="cleanTable" :disabled="disableCleanTable">
           Limpiar tabla
         </button>
       </div>
@@ -45,7 +43,6 @@ export default {
       initNumber: [],
       numbers: null,
       goalState: [1, 2, 3, 4, 5, 6, 7, 8, 0],
-      numbersArr: [5,7,3,6,1,2,4,8,0],
       localData: null,
       file: null,
       error: false,
@@ -62,7 +59,12 @@ export default {
     this.getNumbers();
   },
   computed: {
-
+    disableAddFile() {
+      return this.numbers != null
+    },
+    disableCleanTable() {
+      return this.numbers == null
+    }
   },
   methods: {
     addNumber() {
@@ -71,12 +73,10 @@ export default {
       if (this.file.name.includes(".txt")) {
         reader.onload = (res) => {
           this.error = false;
-          const obj = res.target.result;
-          this.initNumber = Object.assign({}, obj);
+          this.initNumber = this.replaceCaracters(res);
           console.log(this.initNumber)
-          console.log(this.goalState)
-          console.log(this.numbersArr)
-          this.localData = res.target.result.replaceAll(/,/g, "");
+          let vari = res.target.result.replaceAll(/\s+/g, "");
+          this.localData = vari.replaceAll(/,/g, '');
           localStorage.setItem('localData', this.localData);
           this.getNumbers();
         };
@@ -85,6 +85,21 @@ export default {
         this.txtFile++;
         this.$refs.modalError.openModal()
       }
+    },
+    replaceCaracters(res) {
+      let fin = []
+      let arr = []
+      const obj = res.target.result;
+      const array = Array.from(obj);
+      array.forEach(element => {
+        fin.push(parseInt(element));
+      })
+      fin.forEach((k) => {
+        if (k || k == 0) {
+          arr.push(parseInt(k));
+        }
+      })
+      return arr;
     },
     getNumbers() {
       this.numbers = localStorage.getItem('localData');
@@ -95,9 +110,6 @@ export default {
       this.error = false;
       this.getNumbers();
     },
-    showError() {
-      return this.error == true
-    },
     tableEmpty() {
       return this.numbers == null
     },
@@ -105,8 +117,23 @@ export default {
       let goalState = this.goalState;
       var puzzle = this.generatePuzzle(goalState);
       var result = this.bfs(puzzle, goalState);
-      this.numbers = result.pop();
+
+      if (result) {
+        this.viewArray(result);
+      }
+      
       console.log(result);
+    },
+    viewArray(result) {
+      var delay = 0
+
+      result.forEach(elem => {
+        setTimeout(() => {
+          this.numbers = elem
+          console.log(this.numbers)
+        }, 1000 + delay)
+        delay += 1000;
+      })
     },
     generatePuzzle(state) {
       let firstElement, secondElement;
@@ -117,8 +144,8 @@ export default {
         secondElement = _state[1] !== 0 ? 1 : 3;
         this.swap(_state, firstElement, secondElement);
       }
-      _state = this.initNumber; //32 steps
-      console.log('Puzzle to solve: [' + _state + ']');
+      _state = this.initNumber;
+      console.log(_state);
       return _state;
     },
     bfs(state, goalState) {
@@ -178,7 +205,6 @@ export default {
       if (!arr1 || !arr2) {
         return false;
       }
-
       for (var i = 0; i < arr1.length; i++) {
         if (arr1[i] !== arr2[i]) {
           return false;
@@ -207,8 +233,8 @@ export default {
       var pos = state.indexOf(0);
       var row = Math.floor(pos / 3);
       var col = pos % 3;
+      //move up
       if (row > 0) {
-        //move up
         newState = this.move(state, successors, pos, -3);
         console.log('up: ' + newState)
         if (!this.compare(newState, state.prev)) {
@@ -220,8 +246,8 @@ export default {
           }
         }
       }
+      //move left
       if (col > 0) {
-        //move left
         newState = this.move(state, successors, pos, -1);
         console.log('left: ' + newState)
         if (!this.compare(newState, state.prev)) {
@@ -233,8 +259,8 @@ export default {
           }
         }
       }
+      //move down
       if (row < 2) {
-        //move down
         newState = this.move(state, successors, pos, 3);
         console.log('down: ' + newState)
         if (!this.compare(newState, state.prev)) {
@@ -246,8 +272,8 @@ export default {
           }
         }
       }
+      //move right
       if (col < 2) {
-        //move right
         newState = this.move(state, successors, pos, 1);
         console.log('rigth: ' + newState)
         if (!this.compare(newState, state.prev)) {
@@ -287,6 +313,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
+  background-color: var(--bouse);
 
   &__control-table{
 
@@ -296,24 +323,53 @@ export default {
       display: grid;
       justify-content: center;
       align-content: center;
-      border: 1px solid black;
+      border: 1px solid var(--black);
+      border-radius: 15px;
+      font-size: 25px;
+      font: 200% sans-seref;
     }
 
     .table-box {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       grid-template-rows: repeat(3, 1fr);
+      width: 750px;
+      height: 750px;
+      justify-items: center;
+      align-items: center;
+      background-color: var(--gray);
+      border: 1px solid var(--black);
+      padding: 10px;
+      border-radius: 15px;
+
+      .numberList {
+        color: var(--gray);
+        background-color: var(--gray);
+        border: none;
+        border-radius: 0px;
+      }
 
       ul {
         display: flex;
         flex-wrap: wrap;
         list-style-type: none;
         font-family: 'Audiowide';
+        background-color: white;
+        border-radius: 15px;
       }
+
+      ul:nth-child(2n + 1) {
+        background-color: var(--limon);
+      }
+
+      li{
+        border-radius: 15px;
+      }
+      
       ul li {
-        width: 250px;
-        height: 250px;
-        border: 1px solid black;
+        width: 230px;
+        height: 230px;
+        border: 1px solid var(--black);
         font-size: 35px;
         display: flex;
         justify-content: center;
@@ -332,30 +388,37 @@ export default {
         position: relative;
         overflow: hidden;
         display: inline-block;
-        border: 1px solid black;
+        border: none;
         border-radius: 5px;
         padding: 16px 12px;
         cursor: pointer;
-        background-color: blue;
-        color: white;
+        background-color: var(--grid-layer);
+        color: var(--black);
         width: 150px;
         text-align: center;
         font-size: 15px;
+        font: 100% sans-seref;
       }
       .text-reader input {
         position: absolute;
         opacity: 0;
       }
 
+      button:disabled {
+        background-color: red;
+      }
+
       button {
         border-radius: 5px;
-        border: 1px solid black;
+        border: none;
         cursor: pointer;
-        background-color: blue;
+        background-color: var(--grid-layer);
         color: white;
         width: 150px;
         padding: 16px 12px;
         font-size: 15px;
+        color: var(--black);
+        font: 100% sans-seref;
       }
     }
 
