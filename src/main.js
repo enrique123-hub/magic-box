@@ -1,8 +1,8 @@
 import Vue from 'vue'
 import App from './App.vue'
 
-import './style/reset.css'
 import './style/color.css'
+import './style/reset.css'
 
 Vue.config.productionTip = false
 

@@ -36,7 +36,7 @@ export default {
   name: 'TableMagicBox',
   components: {
     ModalError,
-    ModalWin
+    ModalWin,
   },
   data() {
     return {
@@ -48,9 +48,7 @@ export default {
       error: false,
       txtFile: 0,
       size: 0,
-      counter: 1000,
       counted: 0,
-      allSuc: [],
       hast: {},
       values: ''
     }
@@ -108,6 +106,7 @@ export default {
       this.txtFile++;
       localStorage.removeItem('localData');
       this.error = false;
+      location.reload()
       this.getNumbers();
     },
     tableEmpty() {
@@ -126,7 +125,6 @@ export default {
     },
     viewArray(result) {
       var delay = 0
-
       result.forEach(elem => {
         setTimeout(() => {
           this.numbers = elem
@@ -136,13 +134,9 @@ export default {
       })
     },
     generatePuzzle(state) {
-      let firstElement, secondElement;
       let _state = state.slice();
-      this.shuffle(_state);
       if (!this.checkSolvable(_state)) {
-        firstElement = _state[0] !== 0 ? 0 : 3;
-        secondElement = _state[1] !== 0 ? 1 : 3;
-        this.swap(_state, firstElement, secondElement);
+        this.$refs.modalErrorResult.openModal();
       }
       _state = this.initNumber;
       console.log(_state);
@@ -154,7 +148,6 @@ export default {
       this.values[0] = state;
       this.size++;
       for (var i = 0; i < this.size; i++) {
-        this.statesPerSecond();
         if (this.compare(goalState, this.values[i])) {
           return this.collateStates(i);
         } else {
@@ -166,14 +159,7 @@ export default {
         }
       }
     },
-    shuffle(array) {
-      var size = array.length;
-      var rand;
-      for (var i = 1; i < size; i+= 1) {
-        rand = Math.round(Math.random() * i);
-        this.swap(array, rand, i);
-      }
-    },
+    // Verificar si el puzzle tiene solucion
     checkSolvable(state) {
       var pos = state.indexOf(0);
       var _state = state.slice();
@@ -192,14 +178,6 @@ export default {
       var _ = state[from];
       state[from] = state[to];
       state[to] = _;
-    },
-    statesPerSecond() {
-      var now = new Date();
-      var startTime = new Date();
-      if (now.getTime() - startTime.getTime() >= this.counter) {
-        this.counted = this.allSuc.length;
-        this.counter += 1000;
-      }
     },
     compare(arr1, arr2) {
       if (!arr1 || !arr2) {
@@ -228,69 +206,40 @@ export default {
     },
     getSuccessors(state) {
       console.log(state)
-      var newState, _state;
       var successors = [];
       var pos = state.indexOf(0);
       var row = Math.floor(pos / 3);
       var col = pos % 3;
       //move up
       if (row > 0) {
-        newState = this.move(state, successors, pos, -3);
-        console.log('up: ' + newState)
-        if (!this.compare(newState, state.prev)) {
-          _state = this.hashState(newState);
-          if (typeof this.hast[_state] === 'undefined') {
-            this.hast[_state] = newState;
-            newState.prev = state;
-            successors.push(newState);
-          }
-        }
+        this.move(state, successors, pos, -3);
       }
       //move left
       if (col > 0) {
-        newState = this.move(state, successors, pos, -1);
-        console.log('left: ' + newState)
-        if (!this.compare(newState, state.prev)) {
-          _state = this.hashState(newState);
-          if (typeof this.hast[_state] === 'undefined') {
-            this.hast[_state] = newState;
-            newState.prev = state;
-            successors.push(newState);
-          }
-        }
+        this.move(state, successors, pos, -1);
       }
       //move down
       if (row < 2) {
-        newState = this.move(state, successors, pos, 3);
-        console.log('down: ' + newState)
-        if (!this.compare(newState, state.prev)) {
-          _state = this.hashState(newState);
-          if (typeof this.hast[_state] === 'undefined') {
-            this.hast[_state] = newState;
-            newState.prev = state;
-            successors.push(newState);
-          }
-        }
+        this.move(state, successors, pos, 3);
       }
       //move right
       if (col < 2) {
-        newState = this.move(state, successors, pos, 1);
-        console.log('rigth: ' + newState)
-        if (!this.compare(newState, state.prev)) {
-          _state = this.hashState(newState);
-          if (typeof this.hast[_state] === 'undefined') {
-            this.hast[_state] = newState;
-            newState.prev = state;
-            successors.push(newState);
-          }
-        }
+        this.move(state, successors, pos, 1);
       }
       return successors;
     },
     move(state, successors, pos, steps) {
-      var newState;
+      var newState, _state;
       newState = state.slice();
       this.swap(newState, pos, pos + steps);
+      if (!this.compare(newState, state.prev)) {
+          _state = this.hashState(newState);
+          if (typeof this.hast[_state] === 'undefined') {
+            this.hast[_state] = newState;
+            newState.prev = state;
+            successors.push(newState);
+          }
+        }
       return newState;
     },
     hashState(state) {
@@ -313,7 +262,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: var(--bouse);
+  background-color: var(--meet);
 
   &__control-table{
 
@@ -392,7 +341,7 @@ export default {
         border-radius: 5px;
         padding: 16px 12px;
         cursor: pointer;
-        background-color: var(--grid-layer);
+        background-color: var(--bouse);
         color: var(--black);
         width: 150px;
         text-align: center;
@@ -405,14 +354,14 @@ export default {
       }
 
       button:disabled {
-        background-color: red;
+        background-color: var(--grid-layer);
       }
 
       button {
         border-radius: 5px;
         border: none;
         cursor: pointer;
-        background-color: var(--grid-layer);
+        background-color: var(--bouse);
         color: white;
         width: 150px;
         padding: 16px 12px;
